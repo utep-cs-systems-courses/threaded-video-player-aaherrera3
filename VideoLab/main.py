@@ -9,6 +9,7 @@ clipFileName = 'clip.mp4'
 frameQueue = []
 grayQueue = []
 semaphore = Semaphore(2)
+framecap = 50
 
 
 #threads
@@ -18,7 +19,7 @@ class ExtractFramesThread (Thread):
         Thread.__init__(self)
         self.vidcap = cv2.VideoCapture(clipFileName)
         self.vidlen = int(self.vidcap.get(cv2.CAP_PROP_FRAME_COUNT))-1
-        self.queuecap = 738
+        self.queuecap = framecap
         self.count = 0
     def run(self):
         success, image = self.vidcap.read()
@@ -30,6 +31,7 @@ class ExtractFramesThread (Thread):
                 semaphore.release()
                 success, image = self.vidcap.read()
                 self.count = self.count + 1
+                
             if self.count == self.vidlen:
                 print('Extracting Done')
                 break
@@ -40,11 +42,11 @@ class ConvertToGrayScaleThread(Thread):
         Thread.__init__(self)
         self.vidcap = cv2.VideoCapture(clipFileName)
         self.vidlen = int(self.vidcap.get(cv2.CAP_PROP_FRAME_COUNT))-1
-        self.queuecap = 50
+        self.queuecap = framecap
         self.count = 0
     def run(self):
         while True:
-            if frameQueue and len(grayQueue) < queuecap:
+            if frameQueue and len(grayQueue) <= self.queuecap:
                 print(f'Converting frame {self.count} to grayscale')
                 semaphore.acquire()
                 inputFrame = frameQueue.pop(0)
@@ -54,21 +56,42 @@ class ConvertToGrayScaleThread(Thread):
                 grayQueue.append(grayScaleFrame)
                 semaphore.release()
                 self.count = self.count + 1
+                
             if self.count == self.vidlen:
                 print("Done converting to gray scale")
                 break
         return
-    
-                
-                
-                
-                
-                
 
-            
+class DisplayFrameThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+        self.vidcap = cv2.VideoCapture(clipFileName)
+        self.vidlen = int(self.vidcap.get(cv2.CAP_PROP_FRAME_COUNT))-1
+        self.delay = 42
+        self.count = 0
+
+    def run(self):
+        while True:
+            if grayQueue:
+                print(f'Displaying frame {self.count}')
+                semaphore.acquire()
+                inputFrame = grayQueue.pop(0)
+                semaphore.release()
+                cv2.imshow('video',inputFrame)
+                self.count = self.count + 1
+                if cv2.waitKey(self.delay) and 0xFF == ord("q"):
+                    break
+            if self.count == self.vidlen:
+                break
+        cv2.destroyAllWindows()
+        return
+                                            
 extract = ExtractFramesThread()
 extract.run()
-#or x in frameQueue:
-#   print('pop')
-#   print(frameQueue.pop(0))
+convert = ConvertToGrayScaleThread()
+convert.run()
+display = DisplayFrameThread()
+display.run()
+
+
 
