@@ -45,9 +45,20 @@ class ConvertToGrayScaleThread(Thread):
     def run(self):
         while True:
             if frameQueue and len(grayQueue) < queuecap:
+                print(f'Converting frame {self.count} to grayscale')
                 semaphore.acquire()
-                frame = frameQueue.pop(0)
+                inputFrame = frameQueue.pop(0)
                 semaphore.release()
+                grayScaleFrame = cv2.cvtColor(inputFrame, cv2.COLOR_BGR2GRAY)
+                semaphore.acquire()
+                grayQueue.append(grayScaleFrame)
+                semaphore.release()
+                self.count = self.count + 1
+            if self.count == self.vidlen:
+                print("Done converting to gray scale")
+                break
+        return
+    
                 
                 
                 
