@@ -20,9 +20,9 @@ class FrameQueue():
     def remove(self):
         self.full.acquire()
         self.qLock.acquire()
-        return self.queue.pop(0)
+        frame = self.queue.pop(0)
         self.qLock.release()
         self.empty.release()
-
+        return frame
 
     
