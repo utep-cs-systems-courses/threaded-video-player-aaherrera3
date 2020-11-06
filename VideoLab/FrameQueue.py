@@ -3,26 +3,26 @@
 import cv2, os, sys
 from threading import Thread, Semaphore, Lock
 
-class FrameQueue():
-    def __init__(self,cap = 10):
-        self.queue = []
-        self.qLock = Lock()
-        self.full = Semaphore(0)
-        self.empty = Semaphore(cap)
+class FrameQueue(): #Framed Queue class
+    def __init__(self,cap = 10): #cap for queue basic value of 10 can be change
+        self.queue = [] # create a list
+        self.qLock = Lock() # lock
+        self.full = Semaphore(0) #counting lock to see if its full starts at 0
+        self.empty = Semaphore(cap) #counting lock to see if its empty starts at cap
 
-    def add(self,frame):
-        self.empty.acquire()
-        self.qLock.acquire()
-        self.queue.append(frame)
-        self.qLock.release()
-        self.full.release()
+    def put(self,frame):
+        self.empty.acquire() # acquire from empty
+        self.qLock.acquire() # acquire lock
+        self.queue.append(frame) # append to queue
+        self.qLock.release() # release lock
+        self.full.release() # realease from full
 
-    def remove(self):
-        self.full.acquire()
-        self.qLock.acquire()
-        frame = self.queue.pop(0)
-        self.qLock.release()
-        self.empty.release()
-        return frame
+    def get(self):
+        self.full.acquire() # acquire from full
+        self.qLock.acquire() # acquire lcok
+        frame = self.queue.pop(0) # pop first element from queue
+        self.qLock.release() # release lock
+        self.empty.release() # release from empty
+        return frame #return frame
 
     
